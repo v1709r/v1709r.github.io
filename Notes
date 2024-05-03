@@ -1,0 +1,228 @@
+1) We need to handle dependencies: Vitejs.
+    Done by running npm init in commandprompt : npm init vite.
+    Choose vanilla js, which will initialise with a main js file a package.json where we can install dependencies.
+    
+    Can have an error: run npm install vite --save-dev(if didn't work).
+
+2) From there insatll 3js from commandPrompt : npm install three.
+
+3) Run app locally in the webbrowser(localhost:3000) : npm run dev
+    (VITE helps runs the same)
+
+4) In both main css and js files, delete boiler plate codes.
+
+5) Import your images (there can be special images that will be falt but be used to wrap o circular objects. And normal images.).
+
+6) In index.html file add canvas to the body, this is the element showing 3js scene. (id = bg).
+
+7) In css for canvas:
+    position : fixed;
+    top : 0;
+    left : 0;
+    This will allow o make this stick to the background from the top corner and we can overlay other images on top of it.
+
+8) In the main js file import the 3js library:
+    (import * as THREE from 'three';)
+
+9) You always need three things, a scene a camera and a renderer.
+    A scene is like a container holding all your object, lights and cameras
+
+    const scene = new THREE.Scene();
+
+10) To look inside thew screen we need a camera:
+    There are multiple camera types in 3js but most common is the perspective camera mimicking what user will see.
+    a) First argument is the field of view, which is the amount of the world visible in a 360 degree angle (so use 75 from 75 degrees to mimick human eyes).
+    b) Second argument is the aspect ratio, depending upon the users browser window, calculate by:
+    window.innerWidth / window.innerHeight
+    c) Last argument is the "View Frustrum" to contorl which objects are visible relative to the camera itself.
+    0.1, 1000 helps us to view everything pretty much.
+
+14) We now need a renderer to render the scene.
+    It needs to know which DOM element to use, which will be the canvas with the id = 'bg'
+15) Post rendering it, set the pixel ratio:
+    renderer.setPixelRatio( window.devicePixelRatio );
+    Make it full screen by setting the renderer sixe to the window size: renderder.setSize( window.innerWidth, window.innerHeight );
+16) Currrent camera is position in the middle of screen, to get better perspective: by moving it along the z axis:
+    camera.position.setZ(30);
+17) Call the renderer's render method passing in the screen and the camera as the arguments:
+    renderer.render( scene, camera );
+Check the browser to have the black screen.
+
+18) Add an object:
+    Steps: a) Have a geometry/set of vector that define the object itself. 3js has set of inbuilt geometry (cone, cyclender).
+    b) (Here) create a torusGeometry which is like a 3d ring.
+    c) Add a material to give it a color or some kind of texture. Its like a wrapping paper.
+        You have pregiven material for various result. But can also custom shader in WebGl to use as a material.
+
+    const geometry = new THREE.TorusGeometry( 10, 3, 16, 100)
+
+19) Most material require a light source for light to bounce off it. But here we use a BasicMaterial that needs no light source.
+
+    const material = new THREE.MeshBasicMaterial( {color : 0xFF6347, wireframe: true} );
+
+20) Add a mesh by combining the geometry with the material.
+
+    const torus = new THREE.Mesh( geometry, material );
+
+21) Add the same to the scene :
+
+    scene.add(torus);
+
+22) To watch it on the scene, rerender the scene via the render method:
+
+    renderer.render( scene, camera );
+
+    But as we don't want to call the render method again and again, we can make a function that will call the render method infinitely automatically:
+
+    we have a function called animate, that calls requestAnimationFrame in the browser, which is a mechanism that tells the browser that you want to perform an animation.
+
+    function animate() {
+        requestAnimationFrame( animate );
+        // Thus, this will be like a game loop.
+        renderer.render( scene,camera );
+    }
+
+23) Call the animate function : animate()
+
+24) As the shape is not doing anything we can:
+    Change different properties like rotation, position and scale.
+    This can be applied to the animate function before we render it.
+
+25) To make the objects really come to life, lighting is required:
+    In the material, change the Mesh from MeshBasicMaterial to MeshStandardMaterial {#allowing the bouncing off of light}
+    Also, remove the wire Mesh property.
+
+    This results in a black screen as we need a light source.
+
+26) Add a point light:
+    Add a light before we render the geometrical shape for the first time. 
+    (Here value is 0xffffff: 0x here is a hexadecimal literal. In js and others ox means you are working a hexdecimal value than a random number)
+
+    Add its position:
+        pointLight.position.set(5,5,5);
+
+    Add it on to the scene:
+        scene.add(pointLight);
+
+    Cahnge position accordingly.
+
+27) PointLight is great for one obj , by for whole scene:
+    const ambientLight = new THREE>AmbientLight(0xffffff)
+
+    Add the same to the same addition of the pointLight. scene.add(pointLight, ambientLight);
+
+28) Working with lights can be very difficult. Thus, we can introduce a lightHelper. This helps us identify the poisiton of the light sources.
+    const lightHelper = new THREE.PointLightHelper(pointLight);
+    
+    Add the same to the scene:
+
+    scene.add(lightHelper);
+
+29) Another helper is a grid helper, drawing a grid along the scene:
+    const gridHelper = new THREE.GridHelper(200,5);
+        Add the same to the scene.
+
+30) To make the scene more interactive, we can add orbit controls to the same. This allows us to more around the scene using mouse.
+
+    import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+
+    Instantiate the class and pass the camera, the renderer.domElement;
+    This listen the domEvents on the mouse and update the camera position accordingly.
+
+     const controls = new OrbitControls(camera, renderer.domElement);
+
+    Call controls.update() to see the changes updated.
+
+31) Using 3js mathHelpers to generate large number of objects in the scene.
+
+Here we populate with randomly generated stars:
+
+32) Make a function for spawing stars:
+
+    function addStars() {
+        const geometry = new THREE.SphereGeometry(0.25, 24, 24);
+        const material = new THREE.MeshStandardMaterial( {color: 0xffffff} );
+
+        const star = new THREE.Mesh( geometry, material);
+
+        // To create random position we create random poisiton for x, y and z.
+
+        const [x, y, z] = Array(3).fill().map( () => THREE.MathUtils.randFloatSpread( 100 ) ); 
+        // Position values will be filled by an Array with three values and map each values by the 3JS randFloatSpread( 100 ), which will generate the values from -100 to 100.
+
+        Add the same to the scene:
+        star.position.set(x,y,z);
+        scene.add(star);
+    }
+
+33) To fill the scene with start we need the number of stars:
+    Array(200).fill().forEach(addStar);
+    // An 'array of size 200' will be have its 'each' index be filled with a 'star' 
+
+    Make sure to do all this before calling the animate function.
+
+34) Load the images into thr project via: 3js texture loader:
+    const spaceTexture = new THREE.TextureLoader().load('syz.jpg');
+
+    We can also pass a callback function here to notify when the image is done loading. Useful when showing a loading bar along with alot of static assets.
+
+    Make the image as the background. (The stars in the background will merge witht he stars spawned, making everything looking very realistic.)
+
+35) We can also, map textures to individual materials which is knwon as texture mapping, it is the process of taking 2d teture and mapping it to 3d geometry.
+
+    Example:
+
+    const jeffTexture = new THREE.TextureLoader().load('jeff.png');
+    const jeff = new THREE.Mesh(
+        new THREE.BoxGeometry(3,3,3);
+        new THREE.MeshBasicMaterial( {map: jeffTexture} );
+    );
+
+Simply add it back to the scene:
+
+    scene.add(jeff);
+
+    Same can be done for the moon (here):
+
+    But to give it rough texture, can give it a normalMap {This has depth}:
+    in the MeshStandardMaterial( {
+        map: moonTetxure,
+        normalMap: normalTexture    // load the texture first
+    } )
+    This also makes the light bounce off it.
+
+36) Animted scenes, needs to be animated accodring to the scroll. But the scroll also needs a target, thus text needs to be added via markups. The long text will allow the scroll thus, the animation accordingly;
+    This will be added to the body of the html.
+    The root parent element for the text needs to be absolute. This way the text will stay above everything else. (Do same in csss)
+
+37) Set the poisiton of the moon futher back. In 3js this can be done by the '=' sign or the setter function:
+    moon.poisiton.setX(-10);
+
+38) Function moveCamera() { }
+        and
+    document.body.onscroll = moveCamera();
+    //Assign the function as the event handler for document.body.onscroll. ie. when the scroll on the body, the camera is moved.
+
+39) To make the scrolling motion, we need to know where the user is currently at, where its position is at:
+    const t = document.body.getBoundingClientRect().top;
+    // This will give the dimension of the viewport and th top property tells us how far we are from the top of the webpage.
+
+40) In the funciton now we change the values accordingly:
+    moon's rotation, jeff's rotation, camera position mainly.
+    {Check 40}
+
+41) Using CSS grid to make the layout:
+    a) Main element has a been set:
+        display: grid;
+        grid-template-columns: repeat( 12,1fr );    // Repeating 12 grid columns at one fractinoal unit
+
+        This gives us 12 equally sized columns where we can position all the children accordingly.
+
+    b) When we go to a child like <section>, we can add that grid column property and position it accordingly {(here) we can ask it to start at the 2 column and end at the 8 column}. Similary for the (here) header can be made to start at the 2 column and span across 5 columns.   {check **1 and **2}
+
+    Thus it makes it easy to align the dom elements with the 3d stuff in the background.
+
+
+Things to implement in future:
+    1) Resizing is an issue here, can't the UI elements causing problems. (https://atelier.net/virtual-economy/ Check how they solve the problems here)
+    2) 
